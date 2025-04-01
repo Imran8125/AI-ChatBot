@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        :root {
+            --primary-color: #8B5CF6;
+            --bg-dark: #0F0F0F;
+            --bg-darker: #1A1A1A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0AEC0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), #D946EF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        #chat-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--bg-darker);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            margin: 2rem auto;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        #chat-box {
+            height: 500px;
+            overflow-y: auto;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) var(--bg-darker);
+        }
+
+        #chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chat-box::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .message {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+            max-width: 80%;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        .user {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            transform: translateX(20px);
+        }
+
+        .bot {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        #personality-container {
+            width: 100%;
+            max-width: 1000px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .personality-category {
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .category-title {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .personality-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .personality-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .personality-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .personality-btn.selected {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .personality-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .personality-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .custom-personality {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .custom-personality input {
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .custom-personality button {
+            width: fit-content;
+        }
+
+        .built-in-title {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            text-align: center;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin: 0.5rem 0;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            animation: typing 1s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Next-Gen AI Chatbot</h1>
+
+    <div id="personality-container">
+        <div class="custom-personality">
+            <input type="text" id="personality-input" placeholder="Enter custom personality (e.g., 'friendly, funny')">
+            <button id="set-personality-btn">Set Custom Personality</button>
+        </div>
+
+        <h2 class="built-in-title">Choose from Built-in Personalities</h2>
+
+        <div class="personality-category">
+            <h2 class="category-title">Tech Innovators</h2>
+            <div class="personality-buttons">
+                <button class="personality-btn" data-value="Steve Jobs, visionary and inspiring">
+                    <span class="personality-name">Steve Jobs</span>
+                    <span class="personality-desc">Visionary and inspiring</span>
+                </button>
+                <button class="personality-btn" data-value="Elon Musk, futuristic and innovative">
+                    <span class="personality-name">Elon Musk</span>
+                    <span class="personality-desc">Futuristic and innovative</span>
+                </button>
+                <button class="personality-btn" data-value="Bill Gates, logical and business-minded">
+                    <span class="personality-name">Bill Gates</span>
+                    <span class="personality-desc">Logical and business-minded</span>
+                </button>
+                <button class="personality-btn" data-value="Mark Zuckerberg, analytical and data-driven">
+                    <span class="personality-name">Mark Zuckerberg</span>
+                    <span class="personality-desc">Analytical and data-driven</span>
+                </button>
+                <button class="personality-btn" data-value="Linus Torvalds, technical and no-nonsense">
+                    <span class="personality-name">Linus Torvalds</span>
+                    <span class="personality-desc">Technical and no-nonsense</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="personality-category">
+            <h2 class="category-title">Scientists & Thinkers</h2>
+            <div class="personality-buttons">
+                <button class="personality-btn" data-value="Albert Einstein, deep thinker and curious">
+                    <span class="personality-name">Albert Einstein</span>
+                    <span class="personality-desc">Deep thinker and curious</span>
+                </button>
+                <button class="personality-btn" data-value="Isaac Newton, precise and disciplined">
+                    <span class="personality-name">Isaac Newton</span>
+                    <span class="personality-desc">Precise and disciplined</span>
+                </button>
+                <button class="personality-btn" data-value="Nikola Tesla, creative and eccentric">
+                    <span class="personality-name">Nikola Tesla</span>
+                    <span class="personality-desc">Creative and eccentric</span>
+                </button>
+                <button class="personality-btn" data-value="Richard Feynman, humorous and insightful">
+                    <span class="personality-name">Richard Feynman</span>
+                    <span class="personality-desc">Humorous and insightful</span>
+                </button>
+                <button class="personality-btn" data-value="Marie Curie, determined and passionate">
+                    <span class="personality-name">Marie Curie</span>
+                    <span class="personality-desc">Determined and passionate</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="personality-category">
+            <h2 class="category-title">World Leaders</h2>
+            <div class="personality-buttons">
+                <button class="personality-btn" data-value="Abraham Lincoln, wise and articulate">
+                    <span class="personality-name">Abraham Lincoln</span>
+                    <span class="personality-desc">Wise and articulate</span>
+                </button>
+                <button class="personality-btn" data-value="Winston Churchill, strong-willed and inspiring">
+                    <span class="personality-name">Winston Churchill</span>
+                    <span class="personality-desc">Strong-willed and inspiring</span>
+                </button>
+                <button class="personality-btn" data-value="Mahatma Gandhi, peaceful and philosophical">
+                    <span class="personality-name">Mahatma Gandhi</span>
+                    <span class="personality-desc">Peaceful and philosophical</span>
+                </button>
+                <button class="personality-btn" data-value="Julius Caesar, strategic and commanding">
+                    <span class="personality-name">Julius Caesar</span>
+                    <span class="personality-desc">Strategic and commanding</span>
+                </button>
+                <button class="personality-btn" data-value="Napoleon Bonaparte, ambitious and tactical">
+                    <span class="personality-name">Napoleon Bonaparte</span>
+                    <span class="personality-desc">Ambitious and tactical</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="personality-category">
+            <h2 class="category-title">Fictional Characters</h2>
+            <div class="personality-buttons">
+                <button class="personality-btn" data-value="Sherlock Holmes, highly logical and observant">
+                    <span class="personality-name">Sherlock Holmes</span>
+                    <span class="personality-desc">Highly logical and observant</span>
+                </button>
+                <button class="personality-btn" data-value="Tony Stark, witty and genius billionaire">
+                    <span class="personality-name">Tony Stark</span>
+                    <span class="personality-desc">Witty and genius billionaire</span>
+                </button>
+                <button class="personality-btn" data-value="Yoda, wise and cryptic">
+                    <span class="personality-name">Yoda</span>
+                    <span class="personality-desc">Wise and cryptic</span>
+                </button>
+                <button class="personality-btn" data-value="Gandalf, mysterious and guiding">
+                    <span class="personality-name">Gandalf</span>
+                    <span class="personality-desc">Mysterious and guiding</span>
+                </button>
+                <button class="personality-btn" data-value="The Joker, unpredictable and chaotic">
+                    <span class="personality-name">The Joker</span>
+                    <span class="personality-desc">Unpredictable and chaotic</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="personality-category">
+            <h2 class="category-title">Celebrities & Artists</h2>
+            <div class="personality-buttons">
+                <button class="personality-btn" data-value="Leonardo da Vinci, creative and genius">
+                    <span class="personality-name">Leonardo da Vinci</span>
+                    <span class="personality-desc">Creative and genius</span>
+                </button>
+                <button class="personality-btn" data-value="Shakespeare, poetic and dramatic">
+                    <span class="personality-name">Shakespeare</span>
+                    <span class="personality-desc">Poetic and dramatic</span>
+                </button>
+                <button class="personality-btn" data-value="David Bowie, eccentric and visionary">
+                    <span class="personality-name">David Bowie</span>
+                    <span class="personality-desc">Eccentric and visionary</span>
+                </button>
+                <button class="personality-btn" data-value="Oprah Winfrey, warm and motivational">
+                    <span class="personality-name">Oprah Winfrey</span>
+                    <span class="personality-desc">Warm and motivational</span>
+                </button>
+                <button class="personality-btn" data-value="Morgan Freeman, calm and deep-voiced">
+                    <span class="personality-name">Morgan Freeman</span>
+                    <span class="personality-desc">Calm and deep-voiced</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-container" style="display:none;">
+        <div id="chat-box"></div>
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let personality = "";
+        let isTyping = false;
+        let selectedButton = null;
+
+        // Add click handlers for personality buttons
+        document.querySelectorAll('.personality-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if (selectedButton) {
+                    selectedButton.classList.remove('selected');
+                }
+                this.classList.add('selected');
+                selectedButton = this;
+                personality = this.dataset.value;
+                document.getElementById("personality-container").style.display = "none";
+                document.getElementById("chat-container").style.display = "block";
+            });
+        });
+
+        document.getElementById("set-personality-btn").addEventListener("click", function() {
+            let customPersonality = document.getElementById("personality-input").value;
+
+            if (!customPersonality) {
+                alert("Please enter a personality description.");
+                return;
+            }
+
+            personality = customPersonality;
+            document.getElementById("personality-container").style.display = "none";
+            document.getElementById("chat-container").style.display = "block";
+        });
+
+        document.getElementById("send-btn").addEventListener("click", sendMessage);
+        document.getElementById("user-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") sendMessage();
+        });
+
+        function showTypingIndicator() {
+            if (isTyping) return;
+            isTyping = true;
+            const indicator = document.createElement("div");
+            indicator.className = "typing-indicator";
+            indicator.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            document.getElementById("chat-box").appendChild(indicator);
+        }
+
+        function hideTypingIndicator() {
+            isTyping = false;
+            const indicator = document.querySelector(".typing-indicator");
+            if (indicator) indicator.remove();
+        }
+
+        function sendMessage() {
+            let userInput = document.getElementById("user-input").value;
+            if (!userInput) return;
+
+            let chatBox = document.getElementById("chat-box");
+
+            let userMessage = document.createElement("div");
+            userMessage.classList.add("message", "user");
+            userMessage.textContent = userInput;
+            chatBox.appendChild(userMessage);
+
+            showTypingIndicator();
+
+            fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userInput, personality: personality })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTypingIndicator();
+                let botMessage = document.createElement("div");
+                botMessage.classList.add("message", "bot");
+                botMessage.textContent = data.response || "Error in response";
+                chatBox.appendChild(botMessage);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+
+            document.getElementById("user-input").value = "";
+        }
+    </script>
+</body>
+</html>
